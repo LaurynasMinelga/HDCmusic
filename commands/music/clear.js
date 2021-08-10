@@ -1,20 +1,23 @@
 const validation = require('../../app/validation');
 module.exports = {
-    name: 'play',
-    aliases: ['p'],
+    name: 'clear',
+    aliases: ['cq'],
     category: 'Music',
-    utilisation: '{prefix}play [name/URL]',
+    utilisation: '{prefix}clear',
 
-    execute(client, message, args) {
+    execute(client, message) {
         if (
             validation.voiceChannelPresence(client, message) ||
             validation.sameVoiceChannelPresence(client, message) ||
-            validation.songTitle(client, message, args)
+            validation.noMusic(client, message) ||
+            validation.onlyOneSong(client, message)
         ) {
             return;
         }
 
-        client.player.play(message, args.join(" "), { firstResult: true })
+        client.player.clearQueue(message);
+
+        message.channel.send(`${client.emotes.success} - The queue has just been **removed** !`)
             .then(msg => {
                 setTimeout(() => {message.delete();}, 2000);
             })

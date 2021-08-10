@@ -1,3 +1,4 @@
+const validation = require('../../app/validation');
 module.exports = {
     name: 'stop',
     aliases: ['dc'],
@@ -5,15 +6,26 @@ module.exports = {
     utilisation: '{prefix}stop',
 
     execute(client, message) {
-        if (!message.member.voice.channel) return message.channel.send(`${client.emotes.error} - You're not in a voice channel !`);
-
-        if (message.guild.me.voice.channel && message.member.voice.channel.id !== message.guild.me.voice.channel.id) return message.channel.send(`${client.emotes.error} - You are not in the same voice channel !`);
-
-        if (!client.player.getQueue(message)) return message.channel.send(`${client.emotes.error} - No music currently playing !`);
-
+        if (
+            validation.voiceChannelPresence(client, message) ||
+            validation.sameVoiceChannelPresence(client, message) ||
+            validation.noMusic(client, message)
+        ) {
+            return;
+        }
         client.player.setRepeatMode(message, false);
         const success = client.player.stop(message);
 
-        if (success) message.channel.send(`${client.emotes.success} - Music **stopped** into this server !`);
+        if (success) {
+            message.channel.send(`${client.emotes.success} - See ya bois, music out.`)
+                .then(msg => {
+                    setTimeout(() => {message.delete();}, 2000);
+                })
+                .catch(e => {
+                    console.log(e);
+                });
+        } else {
+            message.delete();
+        }
     },
 };
