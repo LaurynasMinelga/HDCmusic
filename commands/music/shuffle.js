@@ -1,3 +1,4 @@
+const validation = require('../../app/validation');
 module.exports = {
     name: 'shuffle',
     aliases: ['sh'],
@@ -5,14 +6,25 @@ module.exports = {
     utilisation: '{prefix}shuffle',
 
     execute(client, message) {
-        if (!message.member.voice.channel) return message.channel.send(`${client.emotes.error} - You're not in a voice channel !`);
-
-        if (message.guild.me.voice.channel && message.member.voice.channel.id !== message.guild.me.voice.channel.id) return message.channel.send(`${client.emotes.error} - You are not in the same voice channel !`);
-
-        if (!client.player.getQueue(message)) return message.channel.send(`${client.emotes.error} - No music currently playing !`);
-
+        if (
+            validation.voiceChannelPresence(client, message) ||
+            validation.sameVoiceChannelPresence(client, message) ||
+            validation.noMusic(client, message)
+        ) {
+            return;
+        }
         const success = client.player.shuffle(message);
 
-        if (success) message.channel.send(`${client.emotes.success} - Queue shuffled **${client.player.getQueue(message).tracks.length}** song(s) !`);
+        if (success) {
+            message.channel.send(`${client.emotes.success} - Queue shuffled **${client.player.getQueue(message).tracks.length}** song(s) !`)
+                .then(msg => {
+                    setTimeout(() => {message.delete();}, 2000);
+                })
+                .catch(e => {
+                    console.log(e);
+                });
+        } else {
+            message.delete();
+        }
     },
 };

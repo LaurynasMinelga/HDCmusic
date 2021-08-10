@@ -1,3 +1,4 @@
+const validation = require('../../app/validation');
 module.exports = {
     name: 'skip',
     aliases: ['sk'],
@@ -5,14 +6,24 @@ module.exports = {
     utilisation: '{prefix}skip',
 
     execute(client, message) {
-        if (!message.member.voice.channel) return message.channel.send(`${client.emotes.error} - You're not in a voice channel !`);
-
-        if (message.guild.me.voice.channel && message.member.voice.channel.id !== message.guild.me.voice.channel.id) return message.channel.send(`${client.emotes.error} - You are not in the same voice channel !`);
-
-        if (!client.player.getQueue(message)) return message.channel.send(`${client.emotes.error} - No music currently playing !`);
-
+        if (
+            validation.voiceChannelPresence(client, message) ||
+            validation.sameVoiceChannelPresence(client, message) ||
+            validation.noMusic(client, message)
+        ) {
+            return;
+        }
         const success = client.player.skip(message);
+        let currentTrack = client.player.nowPlaying(message);
 
-        if (success) message.channel.send(`${client.emotes.success} - The current music has just been **skipped** !`);
+        if (success) {
+            message.channel.send(`${client.emotes.success} - ${currentTrack.title} has just been **skipped**!`)
+                .then(msg => {
+                    setTimeout(() => {message.delete();}, 2000);
+                })
+                .catch(e => {
+                    console.log(e);
+                });
+        }
     },
 };

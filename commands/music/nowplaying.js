@@ -1,3 +1,4 @@
+const validation = require('../../app/validation');
 module.exports = {
     name: 'nowplaying',
     aliases: ['np'],
@@ -5,22 +6,24 @@ module.exports = {
     utilisation: '{prefix}nowplaying',
 
     execute(client, message) {
-        if (!message.member.voice.channel) return message.channel.send(`${client.emotes.error} - You're not in a voice channel !`);
-
-        if (message.guild.me.voice.channel && message.member.voice.channel.id !== message.guild.me.voice.channel.id) return message.channel.send(`${client.emotes.error} - You are not in the same voice channel !`);
-
-        if (!client.player.getQueue(message)) return message.channel.send(`${client.emotes.error} - No music currently playing !`);
-
+        if (
+            validation.voiceChannelPresence(client, message) ||
+            validation.sameVoiceChannelPresence(client, message) ||
+            validation.noMusic(client, message)
+        ) {
+            return;
+        }
         const track = client.player.nowPlaying(message);
         const filters = [];
 
-        Object.keys(client.player.getQueue(message).filters).forEach((filterName) => client.player.getQueue(message).filters[filterName]) ? filters.push(filterName) : false;
+        Object.keys(client.player.getQueue(message).filters)
+            .forEach((filterName) => client.player.getQueue(message).filters[filterName]) ? filters.push(filterName) : false;
 
         message.channel.send({
             embed: {
                 color: 'RED',
                 author: { name: track.title },
-                footer: { text: 'This bot uses a Github project made by Zerio (ZerioDev/Music-bot)' },
+                footer: { text: 'Made by Waswas\'as with love <3' },
                 fields: [
                     { name: 'Channel', value: track.author, inline: true },
                     { name: 'Requested by', value: track.requestedBy.username, inline: true },
