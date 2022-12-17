@@ -1,13 +1,13 @@
 const { ApplicationCommandOptionType } = require('discord.js');
 
 module.exports = {
-    name: 'remove',
-    description: "remove a song from the queue",
+    name: 'jump',
+    description: "Jumps to particular track in queue",
     voiceChannel: true,
     options: [
         {
             name: 'song',
-            description: 'the name/url of the track you want to remove',
+            description: 'the name/url of the track you want to jump to',
             type: ApplicationCommandOptionType.String,
             required: false,
         },
@@ -20,40 +20,30 @@ module.exports = {
     ],
 
     async execute({ inter }) { 
-        const number =  inter.options.getNumber('number')
         const track = inter.options.getString('song');
+        const number =  inter.options.getNumber('number')
 
         const queue = player.getQueue(inter.guildId);
 
         if (!queue || !queue.playing) return inter.reply({ content: `No music currently playing ${inter.member}... try again ? ❌`, ephemeral: true });
-        if (!track && !number) inter.reply({ content: `You have to use one of the options to remove a song ${inter.member}... try again ? ❌`, ephemeral: true });
+        if (!track && !number) inter.reply({ content: `You have to use one of the options to jump to a song ${inter.member}... try again ? ❌`, ephemeral: true });
 
-        if (track) {
-
+            if (track) {
         for (let song of queue.tracks) {
             if (song.title === track || song.url === track ) {
-                queue.remove(song)
-                return inter.reply({ content: `removed ${track} from the queue ✅` });
+                queue.skipTo(song)
+                return inter.reply({ content: `skiped to ${track} ✅` });
             }
-
         }
-
         return inter.reply({ content: `could not find ${track} ${inter.member}... try using the url or the full name of the song ? ❌`, ephemeral: true });    
-        }
-
-        if (number) {
-
-            const index = number - 1
-            const trackname = queue.tracks[index].title
-
-            if (!trackname) return inter.reply({ content: `This track dose not seem to exist ${inter.member}...  try again ?❌`, ephemeral: true });   
-
-            queue.remove(index);
-            
-            return inter.reply({ content: `removed ${trackname} from the queue ✅` });
-        }
-
-
+    }
+    if (number) {
+        const index = number - 1
+        const trackname = queue.tracks[index].title
+        if (!trackname) return inter.reply({ content: `This track dose not seem to exist ${inter.member}...  try again ?❌`, ephemeral: true });   
+        queue.skipTo(index);
+        return inter.reply({ content: `Jumped to ${trackname}  ✅` });
+    }
          
     }
 }

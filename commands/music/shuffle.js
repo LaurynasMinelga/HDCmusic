@@ -1,30 +1,17 @@
-const validation = require('../../app/validation');
 module.exports = {
     name: 'shuffle',
-    aliases: ['sh'],
-    category: 'Music',
-    utilisation: '{prefix}shuffle',
+    description: 'shuffle the track',
+    voiceChannel: true,
 
-    execute(client, message) {
-        if (
-            validation.voiceChannelPresence(client, message) ||
-            validation.sameVoiceChannelPresence(client, message) ||
-            validation.noMusic(client, message)
-        ) {
-            return;
-        }
-        const success = client.player.shuffle(message);
+    async execute({ inter }) {
+        const queue = player.getQueue(inter.guildId);
 
-        if (success) {
-            message.channel.send(`${client.emotes.success} - Queue shuffled **${client.player.getQueue(message).tracks.length}** song(s) !`)
-                .then(msg => {
-                    setTimeout(() => {message.delete();}, 2000);
-                })
-                .catch(e => {
-                    console.log(e);
-                });
-        } else {
-            message.delete();
-        }
+        if (!queue || !queue.playing) return inter.reply({ content: `No music currently playing ${inter.member}... try again ? ❌`, ephemeral: true });
+
+        if (!queue.tracks[0]) return inter.reply({ content: `No music in the queue after the current one ${inter.member}... try again ? ❌`, ephemeral: true });
+
+        await queue.shuffle();
+
+        return inter.reply({ content:`Queue shuffled **${queue.tracks.length}** song(s) ! ✅`});
     },
 };

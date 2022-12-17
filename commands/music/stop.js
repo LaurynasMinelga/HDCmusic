@@ -1,31 +1,15 @@
-const validation = require('../../app/validation');
 module.exports = {
     name: 'stop',
-    aliases: ['dc'],
-    category: 'Music',
-    utilisation: '{prefix}stop',
+    description: 'stop the track',
+    voiceChannel: true,
 
-    execute(client, message) {
-        if (
-            validation.voiceChannelPresence(client, message) ||
-            validation.sameVoiceChannelPresence(client, message) ||
-            validation.noMusic(client, message)
-        ) {
-            return;
-        }
-        client.player.setRepeatMode(message, false);
-        const success = client.player.stop(message);
+    execute({ inter }) {
+        const queue = player.getQueue(inter.guildId);
 
-        if (success) {
-            message.channel.send(`${client.emotes.success} - See ya bois, music out.`)
-                .then(msg => {
-                    setTimeout(() => {message.delete();}, 2000);
-                })
-                .catch(e => {
-                    console.log(e);
-                });
-        } else {
-            message.delete();
-        }
+        if (!queue || !queue.playing) return inter.reply({ content:`No music currently playing ${inter.member}... try again ? ❌`, ephemeral: true });
+
+        queue.destroy();
+
+        inter.reply({ content: `Music stopped intero this server, see you next time ✅`});
     },
 };

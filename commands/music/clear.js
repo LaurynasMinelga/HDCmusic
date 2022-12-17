@@ -1,28 +1,17 @@
-const validation = require('../../app/validation');
 module.exports = {
     name: 'clear',
-    aliases: ['cq'],
-    category: 'Music',
-    utilisation: '{prefix}clear',
+    description: 'clear all the music in the queue',
+    voiceChannel: true,
 
-    execute(client, message) {
-        if (
-            validation.voiceChannelPresence(client, message) ||
-            validation.sameVoiceChannelPresence(client, message) ||
-            validation.noMusic(client, message) ||
-            validation.onlyOneSong(client, message)
-        ) {
-            return;
-        }
+    async execute({ inter }) {
+        const queue = player.getQueue(inter.guildId);
 
-        client.player.clearQueue(message);
+        if (!queue || !queue.playing) return inter.reply({ content: `No music bruh ${inter.member}... try again ? ❌`, ephemeral: true });
 
-        message.channel.send(`${client.emotes.success} - The queue has just been **removed** !`)
-            .then(msg => {
-                setTimeout(() => {message.delete();}, 2000);
-            })
-            .catch(e => {
-                console.log(e);
-            });
+        if (!queue.tracks[0]) return inter.reply({ content: `No music in the queue bruh ${inter.member}... try again ? ❌`, ephemeral: true });
+
+        await queue.clear();
+
+        inter.reply(`The queue has just been cleared bruh 🗑️`);
     },
 };
