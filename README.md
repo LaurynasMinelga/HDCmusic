@@ -2,15 +2,14 @@
 Using a module (discord-player) 🎧
 
 ### Installation
-Edit `config/bot.js`.
+Edit `config.js`.
 
 ```js
 discord: {
     token: 'TOKEN',
-    prefix: 'PREFIX', // ?, !, / or any other symbol
 }
 ```
-Remember to install npm dependencies.
+Remember to install npm dependencies. PREFIX BY DEFAULT IS A COMMAND "/" ex.: /play djmamane song2
 
 - Server configuration:
 
@@ -27,4 +26,11 @@ pm2 start index.js --name "MusicBot"
 
 ```
 (prefix)help // example: ?help
+```
+
+Also pm2 stuff:
+```
+pm2 list
+pm2 start/stop/delete/restart
+pm2 save - to save new processes
 ```
