@@ -1,29 +1,45 @@
+const { ApplicationCommandOptionType } = require('discord.js');
+
 module.exports = {
     name: 'filter',
-    aliases: [],
-    category: 'Music',
-    utilisation: '{prefix}filter [filter name]',
+    description: 'add a filter to your track',
+    voiceChannel: true,
+    options: [
+        {
+            name: 'filter',
+            description: 'filter you want to add',
+            type: ApplicationCommandOptionType.String,
+            required: true,
+            choices: [...Object.keys(require("discord-player").AudioFilters.filters).map(m => Object({ name: m, value: m })).splice(0, 25)],
+        }
+    ],
 
-    execute(client, message, args) {
-        if (!message.member.voice.channel) return message.channel.send(`${client.emotes.error} - You're not in a voice channel !`);
 
-        if (message.guild.me.voice.channel && message.member.voice.channel.id !== message.guild.me.voice.channel.id) return message.channel.send(`${client.emotes.error} - You are not in the same voice channel !`);
+    async execute({ inter, client }) {
+        const queue = player.getQueue(inter.guildId);
 
-        if (!client.player.getQueue(message)) return message.channel.send(`${client.emotes.error} - No music currently playing !`);
+        if (!queue || !queue.playing) return inter.reply({ content: `No music currently playing ${inter.member}... try again ? ❌`, ephemeral: true });
 
-        if (!args[0]) return message.channel.send(`${client.emotes.error} - Please specify a valid filter to enable or disable !`);
+        const actualFilter = queue.getFiltersEnabled()[0];
 
-        const filterToUpdate = client.filters.find((x) => x.toLowerCase() === args[0].toLowerCase());
+        const infilter = inter.options.getString('filter');
 
-        if (!filterToUpdate) return message.channel.send(`${client.emotes.error} - This filter doesn't exist, try for example (8D, vibrato, pulsator...) !`);
+
+        const filters = [];
+
+        queue.getFiltersEnabled().map(x => filters.push(x));
+        queue.getFiltersDisabled().map(x => filters.push(x));
+
+        const filter = filters.find((x) => x.toLowerCase() === infilter.toLowerCase());
+
+        if (!filter) return inter.reply({ content: `This filter doesn't exist ${inter.member}... try again ? ❌\n${actualFilter ? `Filter currently active ${actualFilter}.\n` : ''}List of available filters ${filters.map(x => `**${x}**`).join(', ')}.`, ephemeral: true });
 
         const filtersUpdated = {};
 
-        filtersUpdated[filterToUpdate] = client.player.getQueue(message).filters[filterToUpdate] ? false : true;
+        filtersUpdated[filter] = queue.getFiltersEnabled().includes(filter) ? false : true;
 
-        client.player.setFilters(message, filtersUpdated);
+        await queue.setFilters(filtersUpdated);
 
-        if (filtersUpdated[filterToUpdate]) message.channel.send(`${client.emotes.music} - I'm **adding** the filter to the music, please wait... Note : the longer the music is, the longer this will take.`);
-        else message.channel.send(`${client.emotes.music} - I'm **disabling** the filter on the music, please wait... Note : the longer the music is playing, the longer this will take.`);
+        inter.reply({ content: `The filter ${filter} is now **${queue.getFiltersEnabled().includes(filter) ? 'enabled' : 'disabled'}** ✅\n*Reminder the longer the music is, the longer this will take.*` });
     },
 };

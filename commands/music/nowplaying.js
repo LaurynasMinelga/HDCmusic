@@ -1,47 +1,63 @@
-const validation = require('../../app/validation');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require('discord.js');
+
 module.exports = {
     name: 'nowplaying',
-    aliases: ['np'],
-    category: 'Music',
-    utilisation: '{prefix}nowplaying',
+    description: 'veiw what is playing!',
+    voiceChannel: true,
 
-    execute(client, message) {
-        if (
-            validation.voiceChannelPresence(client, message) ||
-            validation.sameVoiceChannelPresence(client, message) ||
-            validation.noMusic(client, message)
-        ) {
-            return;
-        }
-        const track = client.player.nowPlaying(message);
-        const filters = [];
+    execute({ inter }) {
+        const queue = player.getQueue(inter.guildId);
 
-        Object.keys(client.player.getQueue(message).filters)
-            .forEach((filterName) => client.player.getQueue(message).filters[filterName]) ? filters.push(filterName) : false;
+        if (!queue) return inter.reply({ content: `No music currently playing ${inter.member}... try again ? ❌`, ephemeral: true });
 
-        message.channel.send({
-            embed: {
-                color: 'RED',
-                author: { name: track.title },
-                footer: { text: 'Made by Waswas\'as with love <3' },
-                fields: [
-                    { name: 'Channel', value: track.author, inline: true },
-                    { name: 'Requested by', value: track.requestedBy.username, inline: true },
-                    { name: 'From playlist', value: track.fromPlaylist ? 'Yes' : 'No', inline: true },
+        const track = queue.current;
 
-                    { name: 'Views', value: track.views, inline: true },
-                    { name: 'Duration', value: track.duration, inline: true },
-                    { name: 'Filters activated', value: filters.length + '/' + client.filters.length, inline: true },
+        const methods = ['disabled', 'track', 'queue'];
 
-                    { name: 'Volume', value: client.player.getQueue(message).volume, inline: true },
-                    { name: 'Repeat mode', value: client.player.getQueue(message).repeatMode ? 'Yes' : 'No', inline: true },
-                    { name: 'Currently paused', value: client.player.getQueue(message).paused ? 'Yes' : 'No', inline: true },
+        const timestamp = queue.getPlayerTimestamp();
 
-                    { name: 'Progress bar', value: client.player.createProgressBar(message, { timecodes: true }), inline: true }
-                ],
-                thumbnail: { url: track.thumbnail },
-                timestamp: new Date(),
-            },
-        });
+        const trackDuration = timestamp.progress == 'Infinity' ? 'infinity (live)' : track.duration;
+
+        const progress = queue.createProgressBar();
+        
+
+        const embed = new EmbedBuilder()
+        .setAuthor({ name: track.title,  iconURL: client.user.displayAvatarURL({ size: 1024, dynamic: true })})
+        .setThumbnail(track.thumbnail)
+        .setDescription(`Volume **${queue.volume}**%\nDuration **${trackDuration}**\nProgress ${progress}\nLoop mode **${methods[queue.repeatMode]}**\nRequested by ${track.requestedBy}`)
+        .setFooter({ text: 'Music comes first - Made with heart by Zerio ❤️', iconURL: inter.member.avatarURL({ dynamic: true })})
+        .setColor('ff0000')
+        .setTimestamp()
+
+        const saveButton = new ButtonBuilder()
+        .setLabel('Save this track')
+        .setCustomId(JSON.stringify({ffb: 'savetrack'}))
+        .setStyle('Danger')
+
+        const volumeup = new ButtonBuilder()
+        .setLabel('Volume up')
+        .setCustomId(JSON.stringify({ffb: 'volumeup'}))
+        .setStyle('Primary')
+
+        const volumedown = new ButtonBuilder()
+        .setLabel('Volume Down')
+        .setCustomId(JSON.stringify({ffb: 'volumedown'}))
+        .setStyle('Primary')
+
+        const loop = new ButtonBuilder()
+        .setLabel('Loop')
+        .setCustomId(JSON.stringify({ffb: 'loop'}))
+        .setStyle('Danger')
+
+        const resumepause = new ButtonBuilder()
+         .setLabel('Resume & Pause')
+         .setCustomId(JSON.stringify({ffb: 'resume&pause'}))
+         .setStyle('Success')
+
+
+
+        const row = new ActionRowBuilder().addComponents(volumedown, saveButton, resumepause, loop, volumeup);
+
+         inter.reply({ embeds: [embed], components: [row] });
     },
 };

@@ -1,29 +1,15 @@
-const validation = require('../../app/validation');
 module.exports = {
     name: 'skip',
-    aliases: ['sk'],
-    category: 'Music',
-    utilisation: '{prefix}skip',
+    description: 'stop the track',
+    voiceChannel: true,
 
-    execute(client, message) {
-        if (
-            validation.voiceChannelPresence(client, message) ||
-            validation.sameVoiceChannelPresence(client, message) ||
-            validation.noMusic(client, message)
-        ) {
-            return;
-        }
-        const success = client.player.skip(message);
-        let currentTrack = client.player.nowPlaying(message);
+    execute({ inter }) {
+        const queue = player.getQueue(inter.guildId);
 
-        if (success) {
-            message.channel.send(`${client.emotes.success} - ${currentTrack.title} has just been **skipped**!`)
-                .then(msg => {
-                    setTimeout(() => {message.delete();}, 2000);
-                })
-                .catch(e => {
-                    console.log(e);
-                });
-        }
+         if (!queue || !queue.playing) return inter.reply({ content:`No music currently playing ${inter.member}... try again ? ❌`, ephemeral: true });
+
+        const success = queue.skip();
+
+        return inter.reply({ content: success ? `Current music ${queue.current.title} skipped ✅` : `Something went wrong ${inter.member}... try again ? ❌`});
     },
 };

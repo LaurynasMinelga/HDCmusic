@@ -1,29 +1,18 @@
-const validation = require('../../app/validation');
 module.exports = {
     name: 'resume',
-    aliases: [],
-    category: 'Music',
-    utilisation: '{prefix}resume',
+    description: 'play the track',
+    voiceChannel: true,
 
-    execute(client, message) {
-        if (
-            validation.voiceChannelPresence(client, message) ||
-            validation.sameVoiceChannelPresence(client, message) ||
-            validation.noMusic(client, message) ||
-            validation.alreadyPlaying(client, message)
-        ) {
-            return;
-        }
-        const success = client.player.resume(message);
+    execute({ inter }) {
+        const queue = player.getQueue(inter.guildId);
 
-        if (success) {
-            message.channel.send(`${client.emotes.success} - Song ${client.player.getQueue(message).playing.title} resumed!`)
-                .then(msg => {
-                    setTimeout(() => {message.delete();}, 2000);
-                })
-                .catch(e => {
-                    console.log(e);
-                });
-        }
+        if (!queue) return inter.reply({ content: `No music currently playing ${inter.member}... try again ? ❌`, ephemeral: true });
+        
+
+        if(!queue.connection.paused) return inter.reply({content: `The track is already running, ${inter.member}... try again ? ❌`, ephemeral: true})
+
+        const success = queue.setPaused(false);
+        
+        return inter.reply({ content:success ? `Current music ${queue.current.title} resumed ✅` : `Something went wrong ${inter.member}... try again ? ❌`});
     },
 };
